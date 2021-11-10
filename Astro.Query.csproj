@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--<TargetFramework>net5</TargetFramework>
+    <OutputType>exe</OutputType>-->
+    <TargetFramework>netstandard2.1</TargetFramework>
+
+    <LangVersion>9</LangVersion>
+    <PackageId>Qkmaxware.Astro.Query</PackageId>
+    <Version>1.0.0-rc1</Version>
+    <Authors>Colin Halseth</Authors>
+    <PackageTags>astronomical;api</PackageTags>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <RepositoryUrl>https://github.com/qkmaxware/Astro.Query.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageDescription>
+      Qkmaxware.Astro.Query contains methods and classes to interact with astronomical APIs.
+    </PackageDescription>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="LICENSE.md" CopyToOutputDirectory="Always" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Qkmaxware.Astro.IO" Version="1.0.0-rc1" />
+    <PackageReference Include="System.Text.Json" Version="6.0.0" />
+  </ItemGroup>
+
+</Project>
