@@ -38,7 +38,7 @@ public class NasaLibraryImage : ImageUriReference {
     public string[] ImageUrls {get; private set;}
 
     public NasaLibraryImage(string title, string[] imageUrls) 
-        : base(imageUrls != null && imageUrls.Length > 0 ? new Uri(imageUrls[0]) : null) {
+        : base(imageUrls != null && imageUrls.Length > 0 ? imageUrls[0] : null) {
         this.Title = title;
         this.ImageUrls = imageUrls;
     }

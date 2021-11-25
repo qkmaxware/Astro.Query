@@ -9,8 +9,8 @@ namespace Qkmaxware.Astro.Query {
 /// A reference to an image available at the given URI
 /// </summary>
 public class ImageUriReference {
-    private Uri uri;
-    public ImageUriReference(Uri uri) {
+    private string uri;
+    public ImageUriReference(string uri) {
         this.uri = uri;
     }
 

@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Web;
 using Qkmaxware.Astro.Equipment;
 using Qkmaxware.Measurement;
 
 namespace Qkmaxware.Astro.Query {
 
-
 /// <summary>
 /// Interface to handle requests to Nasa Sky View API (https://skyview.gsfc.nasa.gov/current/docs/batchpage.html)
 /// </summary>
-public class NasaSkyViewAPI {
+public static class NasaSkyViewAPI {
     private static string baseUrl = "https://skyview.gsfc.nasa.gov/cgi-bin/images";
 
     /// <summary>
@@ -47,25 +48,26 @@ public class NasaSkyViewAPI {
         public int Height = 300;
     }
 
-    private Uri params2Uri(Angle ra, Angle dec, QueryParametres p) {
-        var builder = new UriBuilder(baseUrl);
+    private static string params2Uri(Angle ra, Angle dec, QueryParametres p) {
+        var builder = baseUrl + "?";
         // Format can be in HH MM SS
-        builder.AddParametre("Position", $"{(double)ra.TotalHours()},{(double)dec.TotalDegrees()}");
-        builder.AddParametre("Survey", string.Join(",", p.Surveys));
-        builder.AddParametre("Coordinates", p.CoordinateSystem);
+        var raHms = ra.TotalHoursMinutesSeconds();
+        var decDms = dec.TotalDegreesMinutesSeconds();
+        builder += "Position=" + $"{raHms.hours:00}%20{raHms.minutes}%20{raHms.seconds:00},{decDms.degrees}%20{decDms.minutes}%20{decDms.seconds}";
+        builder += "&Survey=" + string.Join(",", p.Surveys.Select((name) => HttpUtility.UrlEncode(name)));
+        builder += "&Coordinates=" + p.CoordinateSystem;
         if (p.HorizontalFov != null && p.VerticalFov != null) {
-            builder.AddParametre("Size", $"{(double)p.HorizontalFov.TotalDegrees()},{(double)p.VerticalFov.TotalDegrees()}");
+            builder += "&Size=" + $"{(double)p.HorizontalFov.TotalDegrees()},{(double)p.VerticalFov.TotalDegrees()}";
         }
-        builder.AddParametre("Pixels", $"{p.Width},{p.Height}");
+        builder += "&Pixels=" + $"{p.Width},{p.Height}";
         if (p.OverlayGrid.HasValue) {
-            builder.AddParametre("Grid", p.OverlayGrid.Value);
+            builder += "&Grid=" + p.OverlayGrid.Value;
         }
         if (!p.AllowGreyscale) {
-            builder.AddParametre("RGB", string.Empty);
+            builder += "&RGB=";
         }
-        builder.AddParametre("Return", p.FileFormat);
-        
-        return builder.Uri;
+        builder += "&Return=" + p.FileFormat;
+        return builder;
     } 
 
     /// <summary>
@@ -75,7 +77,7 @@ public class NasaSkyViewAPI {
     /// <param name="dec">declination</param>
     /// <param name="params">query parameters</param>
     /// <returns>image</returns>
-    public ImageUriReference Query(Angle ra, Angle dec, QueryParametres @params) {
+    public static ImageUriReference Query(Angle ra, Angle dec, QueryParametres @params) {
         var uri = params2Uri(ra, dec, @params);
         return new ImageUriReference(uri);
     }
@@ -88,7 +90,7 @@ public class NasaSkyViewAPI {
     /// <param name="ccd">imaging camera specs</param>
     /// <param name="lens">telescope lens specs</param>
     /// <returns></returns>
-    public ImageUriReference Scan(Angle ra, Angle dec, Camera ccd, Telescope lens) {
+    public static ImageUriReference Scan(Angle ra, Angle dec, Camera ccd, Telescope lens) {
         // Auto compute fov and pixels based on imaging setup
         var p = new QueryParametres {
             HorizontalFov = lens.HorizontalFieldOfView(ccd),
@@ -100,7 +102,7 @@ public class NasaSkyViewAPI {
         return Query(ra, dec, p);
     }
     
-    private Angle lerpAngle(Angle a1, Angle a2, float t) {
+    private static Angle lerpAngle(Angle a1, Angle a2, float t) {
         return (1 - t) * a1 + t * a2;
     }
     
@@ -116,7 +118,7 @@ public class NasaSkyViewAPI {
     /// <param name="ccd">imaging camera specs</param>
     /// <param name="lens">telescope lens specs</param>
     /// <returns>enumerable of images</returns>
-    public IEnumerable<ImageUriReference> Scan(Angle startRa, Angle endRa, int horizontalTiling, Angle startDec, Angle endDec, int verticalTitling, Camera ccd, Telescope lens) {
+    public static IEnumerable<ImageUriReference> Scan(Angle startRa, Angle endRa, int horizontalTiling, Angle startDec, Angle endDec, int verticalTitling, Camera ccd, Telescope lens) {
         var vtile = Math.Max(1, verticalTitling);
         var htile = Math.Max(1, horizontalTiling);
 

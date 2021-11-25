@@ -1,4 +1,5 @@
-/*using System;
+# if DEBUG
+using System;
 using System.Linq;
 
 namespace Qkmaxware.Astro.Query {
@@ -6,13 +7,13 @@ namespace Qkmaxware.Astro.Query {
 class TestProgram {
 
     public static void Main(string[] args) {
-        
+        TestSkyView();
     }
 
     public static void TestNasa() {
         var result = NasaImageLibraryAPI.QueryImages("M31").FirstOrDefault();
         if (result != null) {
-            result.DownloadThumbnail("M31"); 
+            result.DownloadThumbnailImageToFile("M31"); 
         }
     }
 
@@ -28,6 +29,20 @@ class TestProgram {
         }
     }
 
+    public static void TestSkyView() {
+        var image = NasaSkyViewAPI.Query(
+            Measurement.Angle.HoursMinutesSeconds(00,42,44.330),
+            Measurement.Angle.DegreesMinutesSeconds(41,16,07.50),
+            new NasaSkyViewAPI.QueryParametres {
+                FileFormat = NasaSkyViewAPI.ReturnFormat.PNG,
+                Fov = Measurement.Angle.Degrees(3.31)
+            }
+        );
+        image.DownloadImageToFile("m31.png");
+    }
+
 }
 
-}*/
+}
+
+# endif
