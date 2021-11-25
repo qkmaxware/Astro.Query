@@ -7,7 +7,7 @@ Qkmaxware.Astro.Query contains methods and classes to interact with astronomical
 public void downloadFromNasa() {
     var result = NasaImageLibraryAPI.QueryImages("M31").FirstOrDefault();
     if (result != null) {
-        result.DownloadThumbnail("M31"); 
+        result.DownloadThumbnailImageToFile("M31"); 
     }
 }
 ```

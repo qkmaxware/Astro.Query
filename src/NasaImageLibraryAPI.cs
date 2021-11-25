@@ -33,44 +33,29 @@ using System.Text.Json;
 
 namespace Qkmaxware.Astro.Query {
 
-public class NasaLibraryImage {
+public class NasaLibraryImage : ImageUriReference {
     public string Title {get; private set;}
     public string[] ImageUrls {get; private set;}
 
-    public NasaLibraryImage(string title, string[] imageUrls) {
+    public NasaLibraryImage(string title, string[] imageUrls) 
+        : base(imageUrls != null && imageUrls.Length > 0 ? new Uri(imageUrls[0]) : null) {
         this.Title = title;
         this.ImageUrls = imageUrls;
     }
 
     private bool downloadUrl(string url, string saveFilepath) {
-        try{
-            // Preserve extension
-            var ext = Path.GetExtension(url);
-            if (!saveFilepath.EndsWith(ext))
-                saveFilepath += ext;
-
-            // Create parent directories
-            FileInfo info = new FileInfo(saveFilepath);
-            info.Directory.Create();
-
-            // Http request and download
-            var cookies = new CookieContainer();
-            using (var handler = new HttpClientHandler { CookieContainer = cookies, UseCookies = true })
-            using (var client = new System.Net.Http.HttpClient(handler))  {
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; AcmeInc/1.0)");
-                var response = client.GetStreamAsync(url);
-                response.Wait();
-
-                using (var fs = new FileStream(saveFilepath, FileMode.Create)){
-                    var copyTask = response.Result.CopyToAsync(fs);
-                    copyTask.Wait();
-                }
-            }
-            return true;
-        } catch {
-            return false;
-        }
+        // Preserve extension
+        var ext = Path.GetExtension(url);
+        if (!saveFilepath.EndsWith(ext))
+            saveFilepath += ext;
         
+        // Create parent directories
+        FileInfo info = new FileInfo(saveFilepath);
+        info.Directory.Create();
+
+        using (var fs = new FileStream(saveFilepath, FileMode.Create)) {
+            return DownloadUriToStream(url, fs);
+        }
     }
     private bool findCorrectUrlAndDownload(string filter, string saveFilepath) {
         if (this.ImageUrls == null)
@@ -84,13 +69,16 @@ public class NasaLibraryImage {
         }
         return false;
     }
-    public bool DownloadOriginal(string saveFilepath) => findCorrectUrlAndDownload("~orig", saveFilepath);
-    public bool DownloadLarge(string saveFilepath) => findCorrectUrlAndDownload("~large", saveFilepath);
-    public bool DownloadMedium(string saveFilepath) => findCorrectUrlAndDownload("~medium", saveFilepath);
-    public bool DownloadSmall(string saveFilepath) => findCorrectUrlAndDownload("~small", saveFilepath);
-    public bool DownloadThumbnail(string saveFilepath) => findCorrectUrlAndDownload("~thumb", saveFilepath);
+    public bool DownloadOriginalImageToFile(string saveFilepath) => findCorrectUrlAndDownload("~orig", saveFilepath);
+    public bool DownloadLargeImageToFile(string saveFilepath) => findCorrectUrlAndDownload("~large", saveFilepath);
+    public bool DownloadMediumImageToFile(string saveFilepath) => findCorrectUrlAndDownload("~medium", saveFilepath);
+    public bool DownloadSmallImageToFile(string saveFilepath) => findCorrectUrlAndDownload("~small", saveFilepath);
+    public bool DownloadThumbnailImageToFile(string saveFilepath) => findCorrectUrlAndDownload("~thumb", saveFilepath);
 }
 
+/// <summary>
+/// Interface to handle requests to the Nasa Image Library
+/// </summary>
 public static class NasaImageLibraryAPI {
 
     private static string baseUrl = "https://images-api.nasa.gov/search";
@@ -105,7 +93,7 @@ public static class NasaImageLibraryAPI {
         using (var client = new System.Net.Http.HttpClient(handler))  {
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; AcmeInc/1.0)");
 
-            var task = client.GetStreamAsync(builder.Uri.ToString());
+            var task = client.GetStringAsync(builder.Uri.ToString());
             task.Wait();
             var json = task.Result;
             var response = JsonSerializer.Deserialize<Response>(json);
